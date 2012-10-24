@@ -2,12 +2,12 @@
 # -*- coding: utf-8 -*-
 import sys
 import time
-import urllib2
 import random
 import re
+import requests
 
 #torrent info
-tracker = 'http://tracker.puretna.com:6996'
+tracker_url = 'http://tracker.puretna.com:6996'
 pass_key = '00499d9deaeb24dd3ffb64ab61641df6'
 hash = '5efe5793638c0243c99a292f57b25f7271992e00'
 size = 24761542540
@@ -34,7 +34,7 @@ time_current = time_start-1
 # convert info_hash
 info_hash = ""
 for n in range(0, len(hash), 2):
-    info_hash += '%%%s' % hash[n:n+2].upper()
+    info_hash += '%%%s' %(hash[n:n+2].upper())
 
 def scrape(info_hash=info_hash, pass_key=pass_key):
 	if pass_key:
@@ -55,33 +55,27 @@ def announce(event=None, pass_key=pass_key, info_hash=info_hash, peer_id=peer_id
 	# build announce
 	return '%s/announce?info_hash=%s&peer_id=%s&port=%s&uploaded=%s&downloaded=%s&left=%s&corrupt=%s&key=%s%s&numwant=%s%s' %(pass_key, info_hash, peer_id, str(port), str(uploaded), str(downloaded), str(left), str(corrupt), key, full_event, str(numwant), additions)
 
-def header():
-	return {"User-Agent":user_agent, "Accept-Encoding":"gzip"}
-
-#get www page
-def get(target, values=None, header=header()):
-	req = urllib2.Request(target, values, header)
-	return opener.open(req).read()
-
-
 # 		WORK !
-opener = urllib2.build_opener()
+headers = {"User-Agent":user_agent, "Accept-Encoding":"gzip"}
+utorrent = requests.session(headers=headers)
 #start
 n = 1
-#get(tracker+scrape(info_hash))	#only once per torrent (new seed/peer)!
-response = get('%s%s' %(tracker, announce("started")))
+#utorrent.get(tracker_url+scrape(info_hash))	#only once per torrent (new seed/peer)!
+response = utorrent.get('%s%s' %(tracker_url, announce("started"))).content
 interval = re.search(".*?intervali(.*?)e12.*?", response).group(1)
 print '''	>>> Start !\n
 User-Agent: %s
-Client port: 
-Tracker adres: 
-Interval: %s min.''' %(user_agent, str(port), tracker[7:], str(int(interval)/60))
+Client port: %s
+Tracker adres: %s
+Interval: %s min.''' %(user_agent, str(port), tracker_url[7:], str(int(interval)/60))
 while True:
-	if "off" in open("tracker.ini", "r").read():	sys.exit()	# close connection if 'off' found in tracker.ini
-	time.sleep(int(interval))
+	#if "off" in open("tracker.ini", "r").read():	sys.exit()	# close connection if 'off' found in tracker.ini
+	try:		time.sleep(int(interval))
+	except:		break
 	uploaded = int(uploaded + (time.time()-time_current)*random.randint(speed_min, speed_max))
 	print '%s.	Uploaded: %s MiB (%s KiB/s)' %(str(n), str(uploaded/1024/1024), str(int(uploaded/1024/(time_current-time_start))))
-	response = get('%s%s' %(tracker, announce(uploaded=uploaded)))
+	#response = utorrent.get('%s%s' %(tracker_url, announce(uploaded=uploaded))).content
+	utorrent.get('%s%s' %(tracker_url, announce(uploaded=uploaded)))	# no need to get response
 	time_current = time.time()
 	n = n+1
 #dodaj upload, zamknij sesje (event-stopped) - tylko po co skoro sama wygasnie ;-) ?
