@@ -18,10 +18,10 @@ speed_min = speed_min * 1024 # KiB -> B
 speed_max = speed_max * 1024 # KiB -> B
 
 #torrent client info
-user_agent = "uTorrent/2040(21586)"
+user_agent = "uTorrent/2210(25273)"
 port = 16800
-peer_id = "-UT2040-RT%d0%2f%a1%e5U%e8X%de%1a1"
-key = "21CB4DD9"
+peer_id = "-UT2210-%b9b%e4%c4%d0%aa%84LT%08%f7v"
+key = "7C34F748"
 numwant = 200
 additions = "&compact=1&no_peer_id=1"	#numwant = 0 przy zamykaniu sesji !
 
